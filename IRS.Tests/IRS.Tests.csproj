@@ -22,4 +22,8 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\IRS.Application\IRS.Application.csproj" />
+  </ItemGroup>
+
 </Project>
