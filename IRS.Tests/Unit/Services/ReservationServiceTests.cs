@@ -80,5 +80,29 @@ namespace IRS.Tests.Unit.Services
 
             Assert.Equal(ReservationStatus.Confirmed, reservation.Status);
         }
+
+        [Fact]
+        public void Should_Allow_Only_One_Reservation_When_Concurrent_Requests()
+        {
+            // Arrange
+            var repository = new InMemoryReservationRepository();
+            var item = new InventoryItem(Guid.NewGuid(), 1);
+
+            var service = new ReservationService(repository, item);
+
+            int successCount = 0;
+
+            // Act
+            Parallel.For(0, 500, i =>
+            {
+                if (service.Reserve(item.Id))
+                {
+                    Interlocked.Increment(ref successCount);
+                }
+            });
+
+            // Assert
+            Assert.Equal(1, successCount);
+        }
     }
 }
