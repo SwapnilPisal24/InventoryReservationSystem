@@ -24,6 +24,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\IRS.Application\IRS.Application.csproj" />
+    <ProjectReference Include="..\IRS.Infrastructure\IRS.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>
