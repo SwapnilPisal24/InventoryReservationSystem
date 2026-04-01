@@ -29,6 +29,15 @@ This project is a backend system for managing inventory and reservations using C
 2. Open solution in Visual Studio
 3. Run the API project
 
+## Current Progress
+
+- Implemented domain entities with validation
+- Implemented reservation service with basic concurrency control
+- Added reservation lifecycle (Active, Confirmed, Expired)
+- Unit tests for core scenarios
+
+> Further improvements will include concurrency simulation and advanced handling.
+
 ## 👨‍💻 Author
 
 Swapnil Pisal
