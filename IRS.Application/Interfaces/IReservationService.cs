@@ -1,4 +1,5 @@
 ﻿using IRS.Domain.Enums;
+using IRS.Domain.response;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,6 +13,7 @@ namespace IRS.Application.Interfaces
     /// </summary>
     public interface IReservationService
     {
-        ReservationResult Reserve(Guid itemId);
+        ReservationResponse Reserve(Guid itemId);
+        ReservationResult Confirm(Guid reservationId);      
     }
 }

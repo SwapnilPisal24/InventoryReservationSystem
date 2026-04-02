@@ -113,28 +113,80 @@ dotnet test
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ```
-Domain/
+IRS.API/
+  ├── Propties/
+  ├── Controller/
+  ├── Program.cs
+  ├── appsetting.json //will add for configuration
+  
+
+IRS.Domain/
   ├── Entities/
   ├── Enums/
   ├── Interfaces/
+  ├── Response/
 
-Application/
+IRS.Application/
   ├── Interfaces/
   ├── Services/
 
-Infrastructure/
+IRS.Infrastructure/
   ├── Repositories/
 
-Tests/
+IRS.Tests/
   ├── Unit/
+  ├──── Services/
+  
 ```
+
+##  Highlights
+
+- Prevents overselling under high concurrency  
+- Thread-safe using fine-grained per-item locking  
+- Built with Clean Architecture  
+- Exposes REST APIs with Swagger for testing  
+- Supports full reservation lifecycle (Active → Confirmed / Expired)  
+
+## 📡 API Layer
+
+The system exposes REST APIs using ASP.NET Core Web API.
+
+### Endpoints
+
+- `GET /api/reservations/sample-id` → to Create new guid to pass in next api  
+- `POST /api/reservations/{itemId}` → Create reservation  
+- `POST /api/reservations/{reservationId}/confirm` → Confirm reservation  
+
+Swagger is enabled for easy testing.
+
+## Testing via Swagger
+
+Run the application:
+
+```bash
+dotnet run
+
+Open Swagger UI:
+
+https://localhost:<port>/swagger
+
+
+Steps:
+Call sample-id - to get Guid 
+Call Reserve API → get reservationId
+Call Confirm API using same ID
+
+This demonstrates:
+
+No overselling
+Correct reservation lifecycle
 
 ---
 
-## 🎯 Summary
+##  Summary
 
 This solution focuses on:
 

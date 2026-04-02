@@ -1,4 +1,5 @@
 ﻿using IRS.Domain.Entities;
+using IRS.Domain.Enums;
 using IRS.Domain.Interfaces;
 
 namespace IRS.Infrastructure.Repositories
@@ -16,5 +17,11 @@ namespace IRS.Infrastructure.Repositories
         {
             return _reservations.Where(r => r.ItemId == itemId).ToList();
         }
+
+        public Reservation? GetById(Guid reservationId)
+        {
+            return _reservations.FirstOrDefault(r => r.Id == reservationId);
+        }
+
     }
 }

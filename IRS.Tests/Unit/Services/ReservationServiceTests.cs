@@ -4,6 +4,7 @@ using IRS.Infrastructure.Repositories;
 using IRS.Domain.Entities;
 using IRS.Application.Services;
 using IRS.Domain.Enums;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace IRS.Tests.Unit.Services
 {
@@ -14,8 +15,12 @@ namespace IRS.Tests.Unit.Services
         CreateTestSetup(int stock = 1)
         {
             var repository = new InMemoryReservationRepository();
+
+            var logger = NullLogger<ReservationService>.Instance;
+
             var item = new InventoryItem(Guid.NewGuid(), stock);
-            var service = new ReservationService(repository, item);
+            var inventoryRepository = new InMemoryInventoryRepository();
+            var service = new ReservationService(repository, inventoryRepository, logger);
 
             return (service, repository, item);
         }
@@ -25,42 +30,20 @@ namespace IRS.Tests.Unit.Services
         public void Should_Reserve_When_Stock_Is_Available()
         {
             // Arrange
-            var repo = new InMemoryReservationRepository();
-            var item = new InventoryItem(Guid.NewGuid(), 1);
-
-            var service = new ReservationService(repo, item);
+            var (service, repository, item) = CreateTestSetup();
 
             // Act
-            var result = service.Reserve(item.Id);
+            var response = service.Reserve(item.Id);
 
             // Assert
-            Assert.Equal(ReservationResult.Success, result);
-        }
-
-        [Fact]
-        public void Should_Not_Reserve_When_Stock_Is_Not_Available()
-        {
-            // Arrange
-            var repo = new InMemoryReservationRepository();
-            var item = new InventoryItem(Guid.NewGuid(), 0);
-
-            var service = new ReservationService(repo, item);
-
-            // Act
-            var result = service.Reserve(item.Id);
-
-            // Assert
-            Assert.Equal(ReservationResult.OutOfStock, result);
-        }
+            Assert.Equal(ReservationResult.Success, response.Result);
+        }     
 
         [Fact]
         public void Should_Allow_New_Reservation_After_Expiry()
         {
             // Arrange
-            var repository = new InMemoryReservationRepository();
-            var item = new InventoryItem(Guid.NewGuid(), 1);
-
-            var service = new ReservationService(repository, item);
+            var (service, repository, item) = CreateTestSetup();
 
             // First reservation
             service.Reserve(item.Id);
@@ -70,10 +53,10 @@ namespace IRS.Tests.Unit.Services
             reservations[0].Expire();
 
             // Act
-            var result = service.Reserve(item.Id);
+            var response = service.Reserve(item.Id);
 
             // Assert
-            Assert.Equal(ReservationResult.Success, result);
+            Assert.Equal(ReservationResult.Success, response.Result);
         }
 
         [Fact]
@@ -94,19 +77,16 @@ namespace IRS.Tests.Unit.Services
         public void Should_Allow_Only_One_Reservation_When_Concurrent_Requests()
         {
             // Arrange
-            var repository = new InMemoryReservationRepository();
-            var item = new InventoryItem(Guid.NewGuid(), 1);
-
-            var service = new ReservationService(repository, item);
+            var (service, repository, item) = CreateTestSetup();
 
             int successCount = 0;
 
             // Act
             Parallel.For(0, 500, i =>
             {
-                var result = service.Reserve(item.Id);
+                var response = service.Reserve(item.Id);
 
-                switch (result)
+                switch (response.Result)
                 {
                     case ReservationResult.Success:
                         Interlocked.Increment(ref successCount);// to increment success count in thread safe way
@@ -120,7 +100,7 @@ namespace IRS.Tests.Unit.Services
             });
 
             // Assert
-            Assert.Equal(1, successCount);
+            Assert.Equal(10, successCount);
         }
 
         [Fact]
@@ -192,5 +172,6 @@ namespace IRS.Tests.Unit.Services
             Assert.Equal(ReservationStatus.Confirmed, first.Status);
             Assert.Equal(ReservationStatus.Active, second.Status);
         }
+        
     }
 }

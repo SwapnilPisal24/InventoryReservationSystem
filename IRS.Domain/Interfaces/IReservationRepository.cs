@@ -1,4 +1,5 @@
 ﻿using IRS.Domain.Entities;
+using IRS.Domain.Enums;
 
 namespace IRS.Domain.Interfaces
 {
@@ -10,5 +11,6 @@ namespace IRS.Domain.Interfaces
     {
         void Add(Reservation reservation);
         List<Reservation> GetByItemId(Guid itemId);
+        Reservation? GetById(Guid reservationId);
     }
 }
