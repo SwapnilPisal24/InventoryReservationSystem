@@ -26,13 +26,42 @@ namespace IRS.Domain.Entities
             Status = ReservationStatus.Active;
         }
 
-        // Confirm method changes the status of the reservation to Confirmed if it is currently Active, otherwise it throws an exception indicating that only active reservations can be confirmed.
-        public void Confirm()
+        public bool IsExpired()
         {
-            if (Status != ReservationStatus.Active)
-                throw new InvalidOperationException("Only active reservations can be confirmed");
+            return DateTime.UtcNow >= ExpiryTime;
+        }
+        public void ForceExpire()
+        {
+            ExpiryTime = DateTime.UtcNow.AddMinutes(-1);
+        }
 
-            Status = ReservationStatus.Confirmed;
+        // Confirm method changes the status of the reservation to Confirmed if it is currently Active, otherwise it throws an exception indicating that only active reservations can be confirmed.
+        public ReservationResult Confirm()
+        {
+            if (IsExpired())
+            {
+                Status = ReservationStatus.Expired;
+                return ReservationResult.Expired;
+            }
+
+            switch (Status)
+            {
+                case ReservationStatus.Active:
+                    Status = ReservationStatus.Confirmed;
+                    return ReservationResult.Success;
+
+                case ReservationStatus.Confirmed:
+                    return ReservationResult.AlreadyConfirmed;
+
+                case ReservationStatus.Expired:
+                    return ReservationResult.Expired;
+
+                case ReservationStatus.Cancelled:
+                    return ReservationResult.Cancelled;
+
+                default:
+                    return ReservationResult.Failed;
+            }
         }
 
         // Cancel method changes the status of the reservation to Cancelled if it is currently Active, otherwise it throws an exception indicating that only active reservations can be cancelled.

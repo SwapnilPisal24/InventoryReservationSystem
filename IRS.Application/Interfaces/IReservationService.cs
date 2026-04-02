@@ -1,4 +1,5 @@
-﻿using System;
+﻿using IRS.Domain.Enums;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -11,6 +12,6 @@ namespace IRS.Application.Interfaces
     /// </summary>
     public interface IReservationService
     {
-        bool Reserve(Guid itemId);
+        ReservationResult Reserve(Guid itemId);
     }
 }

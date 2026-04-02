@@ -17,10 +17,10 @@ namespace IRS.Domain.Enums
         // Purchased
         Confirmed,
 
-        // Purchased
+        // User cancelled
         Cancelled,
 
-        // User cancelled
+        // either expired or cancelled by system
         Expired
     }
 }

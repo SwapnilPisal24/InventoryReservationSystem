@@ -2,6 +2,7 @@
 using IRS.Domain.Entities;
 using IRS.Domain.Enums;
 using IRS.Domain.Interfaces;
+using System.Collections.Concurrent;
 
 namespace IRS.Application.Services
 {
@@ -10,7 +11,11 @@ namespace IRS.Application.Services
         private readonly IReservationRepository _repository;
         private readonly InventoryItem _item;
 
-        private readonly object _lock = new();
+        // Using a static ConcurrentDictionary to manage locks for each item ID.
+        // This allows us to have a separate lock for each item, preventing contention between different items while still ensuring thread safety when reserving stock for the same item.
+        private static readonly ConcurrentDictionary<Guid, object> _locks = new();
+
+        //private readonly object _lock = new();
 
         public ReservationService(IReservationRepository repository, InventoryItem item)
         {
@@ -51,38 +56,43 @@ namespace IRS.Application.Services
         /// </summary>
         /// <param name="itemId"></param>
         /// <returns></returns>
-        public bool Reserve(Guid itemId)
+        public ReservationResult Reserve(Guid itemId)
         {
-            lock (_lock) // concurrency control
+            var lockObj = _locks.GetOrAdd(itemId, _ => new object());
+
+            lock (lockObj)
             {
                 var reservations = _repository.GetByItemId(itemId);
 
-                int active = reservations.Count(r => r.Status == ReservationStatus.Active);
-                int confirmed = reservations.Count(r => r.Status == ReservationStatus.Confirmed);
-
-                int available = _item.TotalStock - active - confirmed;
-
-                if (available <= 0)
-                    return false;
+                if (CalculateAvailableStock(reservations) <= 0)
+                    return ReservationResult.OutOfStock;
 
                 var reservation = new Reservation(itemId, TimeSpan.FromMinutes(2));
 
                 _repository.Add(reservation);
 
-                return true;
+                return ReservationResult.Success;
             }
         }
 
-        public void Confirm(Guid reservationId)
+        public ReservationResult Confirm(Guid reservationId)
         {
             var reservation = _repository
                 .GetByItemId(_item.Id)
                 .FirstOrDefault(r => r.Id == reservationId);
 
             if (reservation == null)
-                throw new Exception("Reservation not found");
+                return ReservationResult.NotFound; 
 
-            reservation.Confirm();
+            return reservation.Confirm(); 
+        }
+
+        private int CalculateAvailableStock(List<Reservation> reservations)
+        {
+            int active = reservations.Count(r => r.Status == ReservationStatus.Active);
+            int confirmed = reservations.Count(r => r.Status == ReservationStatus.Confirmed);
+
+            return _item.TotalStock - active - confirmed;
         }
     }
 }
